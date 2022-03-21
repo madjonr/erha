@@ -15,7 +15,7 @@ class InvertedPendulumRobot():
         self.regulator = BalanceRegulator(self.imu)
 
     def ISR(self, tim):
-        self.motors.run()
+        self.motors.run()        
 
 
 if __name__ == '__main__':
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     tim = Timer()
     tim.init(freq=6250, mode=Timer.PERIODIC, callback=erha.ISR)
 
-    erha.setTimerInterrupt()
+    #erha.setTimerInterrupt()
     erha.motors.readyRoutine()
 
     while True:
