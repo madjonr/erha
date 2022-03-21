@@ -4,7 +4,7 @@ from math import radians
 import utime
 from angleFilter import Filter
 from imu import MPU6050
-from motor import Motor
+from motorController import MotorController
 from balanceCarPID import PID
 
 
@@ -20,7 +20,7 @@ WAKEUP_ANGLE = 1.0                   # 唤醒角度，小车在这个角度范�
 
 
 
-def _constrain(self, value, limit_min, limit_max):
+def constrain(self, value, limit_min, limit_max):
     if value < limit_min:
         return limit_min
     elif value > limit_max:
@@ -34,14 +34,14 @@ class BalanceRegulator():
     
     def __init__(self, imu):
         self.filtered_estimated_speed = 0        # 上一次预估速度过滤后的值
-        self.prev_time = 0                       # 上一次的采样时间
+        self.prev_time = utime.ticks_us()        # 上一次的采样时间
         self.expected_speed = 0                  # 预期速度
         #self.angle_offset = 0                    # 偏置角度
         self.L_rps_vel = 0
         self.R_rps_vel = 0
         self.turn_speed = 0                      # 转向速度
         self.filter = Filter()
-        self.motor = Motor()
+        self.motors = MotorController()
         self.pid = PID()
         self.imu = imu
         self.mAverageRpsVelocity = 0             # 平均fps速度，后面要看看*****
@@ -96,23 +96,23 @@ class BalanceRegulator():
         修正循环
         """
         now = utime.ticks_us()
-        dt = utime.ticks_diff(utime.ticks_us(), self.prev_time)/1000000
+        dt = utime.ticks_diff(now, self.prev_time)/1000000
         self.prev_time = now
-        mpu_angle = self.filter.getAngle(self.imu, dt)
+        mpu_angle = self.filter.getAngel(self.imu, dt)
         current_angle = mpu_angle + ANGLE_OFFSET
         
         if abs(current_angle) < WAKEUP_ANGLE:     # 在唤醒角度内，唤醒马达
-            self.motor.enable()
+            self.motors.enable()
         if abs(current_angle) > DEAD_ANGLE:       # 超过安全角度，关闭马达
-            self.motor.disable()
+            self.motors.disable()
             L_rps_vel = 0
             R_lps_vel = 0
             mAverageRpsVelocity = 0
             
-        if self.motor.enable:
+        if self.motors.enable:
             estimated_speed = self.estimateSpeed(dt)   # 估算速度
             target_angle = self.pid.PI_Speed(estimated_speed, EXPECTED_SPEED, dt)
-            regulated_delta_speed = self.pid.PD_Angel(current_angle, target_angle)
+            regulated_delta_speed = self.pid.PD_Angel(current_angle, target_angle, dt)
             
             #regulated_delta_speed = _constrain(regulated_delta_speed, -5.0, 5.0)   # 约束小车的加速
             
@@ -121,7 +121,7 @@ class BalanceRegulator():
             L_rps_vel = self.mAverageRpsVelocity - self.turn_speed
             R_rps_vel = self.mAverageRpsVelocity + self.turn_speed
             
-            self.motor.set_speed(L_rps_vel, R_rps_vel)
+            self.motors.setSpeed(L_rps_vel, R_rps_vel)
             
         self.previous_angle = current_angle
             

@@ -1,51 +1,67 @@
-import utime
-from machine import Pin, I2C, UART
+from machine import Pin, I2C, UART, Timer
 from balanceRegulator import BalanceRegulator
 from imu import MPU6050
-from motor import Motor
-from angleFilter import Filter
-from balanceCarPID import PID
-
-regulator = BalanceRegulator()
+from motorController import MotorController
 
 
+class InvertedPendulumRobot():
+    def __init__(self):
+        self.blue = UART(0, baudrate=9600, tx=Pin(16), rx=Pin(17))
+        self.led = Pin(25, Pin.OUT)
+        _i2c = I2C(1, sda=Pin(26), scl=Pin(27), freq=400000)
+        self.imu = MPU6050(_i2c)
+
+        self.motors = MotorController()
+        self.regulator = BalanceRegulator(self.imu)
+
+    def ISR(self, tim):
+        self.motors.run()
 
 
 if __name__ == '__main__':
-    blue = UART(0, tx=Pin(16), rx=Pin(17), baudrate=9600)
-    led = Pin(25, Pin.OUT)
+    erha = InvertedPendulumRobot()
 
-    i2c = I2C(1, sda=Pin(26), scl=Pin(27), freq=400000)
-    imu = MPU6050(i2c)
+    tim = Timer()
+    tim.init(freq=6250, mode=Timer.PERIODIC, callback=erha.ISR)
 
-    motor = Motor()
-
+    erha.setTimerInterrupt()
+    erha.motors.readyRoutine()
 
     while True:
-        regulator.regulateLoop()
+        erha.regulator.regulateLoop(erha.imu)
 
-
-        if blue.any() > 0:
-            msg = blue.read()
+        if erha.blue.any() > 0:
+            msg = erha.blue.read()
             print(msg)
             if b'\xff\x01\x01\x01\x02\x00\x01\x00' == msg:
                 print('forward')
-                led.value(1)
+                erha.led.value(1)
             elif b'\xff\x01\x01\x01\x02\x00\x02\x00' == msg:
                 print('back')
-                led.value(1)
+                erha.led.value(1)
             elif b'\xff\x01\x01\x01\x02\x00\x04\x00' == msg:
                 keyPressed = 'left'
                 print('left')
-                led.value(1)
+                erha.led.value(1)
             elif b'\xff\x01\x01\x01\x02\x00\x08\x00' == msg:
                 keyPressed = 'right'
                 print('right')
-                led.value(1)
+                erha.led.value(1)
             elif b'\xff\x01\x01\x01\x02\x00\x00\x00' == msg:
                 keyPressed = ''
                 print('key up')
-                led.value(0)
+                erha.led.value(0)
             else:
                 print('other control')
-            blue.write("recived {} \r\n".format(msg))
+            # erha.blue.write("recived: {} \r\n".format(msg))
+
+
+
+
+
+
+
+
+
+
+

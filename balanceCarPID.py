@@ -1,11 +1,10 @@
 '''
 平衡车PID控制器
 '''
-import time
 
 
 
-def _constrain(self, value, limit_min, limit_max):
+def _constrain(value, limit_min, limit_max):
     if value < limit_min:
         return limit_min
     elif value > limit_max:
@@ -21,8 +20,8 @@ class PID(object):
         self.prev_time = 0                       # 上一次的采样时间
         self.error_sum = 0                       # PI 计算时的累积误差
         self.prev_error_angle = 0                # 上一次的错误角度
-        self.speed_pid_P = 0
-        self.speed_pid_I = 0
+        self.speed_pid_P = 30
+        self.speed_pid_I = 1
         self.angle_pid_P = 0
         self.angle_pid_D = 0
         self.target_angle = 1.39                 # 小车站立的目标便置角度
@@ -37,7 +36,7 @@ class PID(object):
         """
         speed_error = exp_speed - est_speed
         self.error_sum += speed_error
-        self.error_sum = self.filter.constrain(self.error_sum, -100000, 100000)
+        self.error_sum = _constrain(self.error_sum, -100000, 100000)
         output = self.speed_pid_P * speed_error + self.speed_pid_I * self.error_sum * dt
         
         return output
@@ -47,9 +46,9 @@ class PID(object):
         """
         直立环PD
         """
-        error_angle = self.targe_angle - current_angle                                    # 角度误差
+        error_angle = target_angle - current_angle                                    # 角度误差
         _derivative = self.angle_pid_D * (error_angle - self.prev_error_angle)/dt
-        _derivative = self.filter._constrain(_derivative, -0.2, 0.2)      # 微分项, 进行约束
+        _derivative = _constrain(_derivative, -0.2, 0.2)      # 微分项, 进行约束
         output = self.angle_pid_P * error_angle + _derivative
         self.prev_error_angle = error_angle
         return output

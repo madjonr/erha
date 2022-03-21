@@ -30,23 +30,6 @@ class Filter(object):
         roll = int(degrees(atan(ay/sqrt(ax**2+az**2+1e-16))))
         pitch = int(degrees(atan(-ax/sqrt(ay**2+az**2+1e-16))))
         return (roll, pitch)
-
-
-    def calculate_angle_gyro(self, gx, gy, gz):
-        """
-        通过陀螺仪数据计算偏转角度
-        gx: roll 翻滚角速度
-        gy: pitch 俯仰角速度
-        gz: yaw 偏航角速度
-        """
-        if isnan(self.__angle):
-            self.__angle = angle          
-        self.__delta = utime.ticks_diff(utime.ticks_us(), self.__time)/1000000
-        self.last_gyro_angle[0] += gx * self.__delta
-        self.last_gyro_angle[1] += gy * self.__delta
-        self.last_gyro_angle[2] += gz * self.__delta
-        self.last_gyro_angle = (self.angle_x, self.angle_y, self.angle_z)
-        return self.last_gyro_angle
     
     
     def complementary(self, imu):
