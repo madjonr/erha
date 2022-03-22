@@ -61,7 +61,7 @@ class Motor:
             self.previous_step_pulse = 0.0
         else:
             self.current_direction = Direction['FORWARD'] if speed_rps > 0 else Direction['BACKWARD']  # 确定马达的转向
-            self.desired_step_interval = 5000/self.pulse_period_us/MICROSTEPS/speed_rps_abs            # 5000us时间内？要达到期望的转速，需要的脉冲间隔
+            self.desired_step_interval = 6250/self.pulse_period_us/MICROSTEPS/speed_rps_abs            # 6250是频率，要达到期望的转速，需要的脉冲间隔
             self.current_step_pulse = self.desired_step_interval
             self.previous_step_pulse = 0
         

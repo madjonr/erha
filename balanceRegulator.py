@@ -20,7 +20,7 @@ WAKEUP_ANGLE = 1.0                   # 唤醒角度，小车在这个角度范�
 
 
 
-def constrain(self, value, limit_min, limit_max):
+def constrain(value, limit_min, limit_max):
     if value < limit_min:
         return limit_min
     elif value > limit_max:
@@ -105,9 +105,9 @@ class BalanceRegulator():
             self.motors.enable()
         if abs(current_angle) > DEAD_ANGLE:       # 超过安全角度，关闭马达
             self.motors.disable()
-            L_rps_vel = 0
-            R_lps_vel = 0
-            mAverageRpsVelocity = 0
+            self.L_rps_vel = 0
+            self.R_lps_vel = 0
+            self.mAverageRpsVelocity = 0
             
         if self.motors.enable:
             estimated_speed = self.estimateSpeed(dt)   # 估算速度
@@ -118,10 +118,10 @@ class BalanceRegulator():
             
             self.mAverageRpsVelocity += regulated_delta_speed
             
-            L_rps_vel = self.mAverageRpsVelocity - self.turn_speed
-            R_rps_vel = self.mAverageRpsVelocity + self.turn_speed
+            self.L_rps_vel = self.mAverageRpsVelocity - self.turn_speed
+            self.R_rps_vel = self.mAverageRpsVelocity + self.turn_speed
             
-            self.motors.setSpeed(L_rps_vel, R_rps_vel)
+            self.motors.setSpeed(self.L_rps_vel, self.R_rps_vel)
             
         self.previous_angle = current_angle
             
