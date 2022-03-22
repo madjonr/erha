@@ -1,5 +1,5 @@
 
-from math import atan, sqrt, degrees, sin, cos, tan, isnan, radians
+from math import atan, sqrt, degrees, isnan
 import utime
 
 
@@ -55,20 +55,18 @@ class Filter(object):
         """
         互补滤波，外部控制采样时间
         """
-        angle = degrees(atan(imu.accel.y/sqrt(imu.accel.x**2+imu.accel.z**2)))
-        #angle = degrees(atan(imu.accel.y/imu.accel.z))
+        angle = degrees(atan(imu.accel.y / sqrt(imu.accel.x ** 2 + imu.accel.z ** 2)))
+        # angle = degrees(atan(imu.accel.y/imu.accel.z))
         if isnan(self.__angle):
-            self.__angle = angle          
-        self.__angle = (1-self.__alpha) * (self.__angle + imu.gyro.x * dt) + self.__alpha * angle
-        
-        # Gyro bias correction  陀螺仪偏置校正
-        # We supose that the long term mean of the gyro_value should tend to zero (gyro_offset). This means that the robot is not continuosly rotating.
-        # 我们假设陀螺仪值的长期平均值应该趋于零（陀螺仪偏移）。这意味着机器人不是连续旋转的。
-        #correction = self.constrain(imu.gyro.x, self.__x_gyro_offset-10, self.__x_gyro_offset-10)
-        #self.__x_gyro_offset = self.__x_gyro_offset * 0.9995 + correction * 0.0005
-        
-        
-        return self.__angle 
+            self.__angle = angle
+        self.__delta = utime.ticks_diff(utime.ticks_us(), self.__time) / 1000000
+        self.__time = utime.ticks_us()
+        self.__angle = (1 - self.__alpha) * (self.__angle + imu.gyro.x * self.__delta) + self.__alpha * angle
+
+        # correction = self.constrain(imu.gyro.x, self.__x_gyro_offset-10, self.__x_gyro_offset-10)
+        # self.__x_gyro_offset = self.__x_gyro_offset * 0.9995 + correction * 0.0005
+
+        return self.__angle
         
     
     def kalman(self):

@@ -20,10 +20,10 @@ class PID(object):
         self.prev_time = 0                       # 上一次的采样时间
         self.error_sum = 0                       # PI 计算时的累积误差
         self.prev_error_angle = 0                # 上一次的错误角度
-        self.speed_pid_P = 30
-        self.speed_pid_I = 1
-        self.angle_pid_P = 0
-        self.angle_pid_D = 0
+        self.speed_pid_P = 1
+        self.speed_pid_I = 0.1
+        self.angle_pid_P = 10
+        self.angle_pid_D = 0.01
         self.target_angle = 1.39                 # 小车站立的目标便置角度
         
 

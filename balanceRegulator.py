@@ -89,7 +89,7 @@ class BalanceRegulator():
         return self.filtered_estimated_speed
     
     
-    def regulateLoop(self, imu):
+    def regulateLoop(self):
         """
         修正循环
         """
@@ -104,12 +104,13 @@ class BalanceRegulator():
         if abs(current_angle) > DEAD_ANGLE:                              # 超过安全角度，关闭马达
             self.motors.disable()
             self.L_rps_vel = 0
-            self.R_lps_vel = 0
+            self.R_rps_vel = 0
             self.mAverageRpsVelocity = 0
             
         if self.motors.enable:
             estimated_speed = self.estimateSpeed(dt)                     # 估算小车速度
             target_angle = self.pid.PI_Speed(estimated_speed, EXPECTED_SPEED, dt)         # 计算速度环
+            print('estimatedSpeed:{}  targetSpeed:{}'.format(estimated_speed, target_angle))
             regulated_delta_speed = self.pid.PD_Angel(current_angle, target_angle, dt)    # 计算直立环
             
             #regulated_delta_speed = _constrain(regulated_delta_speed, -5.0, 5.0)         # 约束小车的加速，防止小车过冲
@@ -118,7 +119,7 @@ class BalanceRegulator():
             
             self.L_rps_vel = self.mAverageRpsVelocity - self.turn_speed                   # 左轮加上转向的速度数据
             self.R_rps_vel = self.mAverageRpsVelocity + self.turn_speed                   # 右轮加上转向的速度数据
-            
+            print('motor_L:{}  motor_R:{}'.format(self.L_rps_vel, self.R_rps_vel))
             self.motors.setSpeed(self.L_rps_vel, self.R_rps_vel)                          # 设定左右轮的速度
             
         self.previous_angle = current_angle

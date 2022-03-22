@@ -28,7 +28,7 @@ if __name__ == '__main__':
     erha.motors.readyRoutine()
 
     while True:
-        erha.regulator.regulateLoop(erha.imu)
+        erha.regulator.regulateLoop()
 
         if erha.blue.any() > 0:
             msg = erha.blue.read()
