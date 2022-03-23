@@ -36,13 +36,13 @@ class Motor:
     """
     
     """        
-    def __init__(self, dir_pin:Pin, step_pin:Pin, en_pin:Pin, side=False):
+    def __init__(self, sm_id, dir_pin:Pin, step_pin:Pin, en_pin:Pin, side=False):
         self.step_pin: Pin = step_pin
         self.dir_pin: Pin = dir_pin
         self.en_pin: Pin = en_pin
         self.side = side
 
-        self.sm = rp2.StateMachine(0, blink, freq=RREQ, set_base=step_pin)
+        self.sm = rp2.StateMachine(sm_id, blink, freq=RREQ, set_base=step_pin)
         self.sm.active(1)
 
 
@@ -78,10 +78,11 @@ class Motor:
         if speed_rps_abs < 0.001:                        # 转速很小的情况,电机停止？
             self.disable()
         else:
+            self.enable()
             self.current_direction = Direction['FORWARD'] if speed_rps > 0 else Direction['BACKWARD']  # 确定马达的转向
             #
-            self.desired_step_interval = (RREQ-2)/(STEP_P_LAP*MICROSTEPS*speed_rps)-(1+2+1)
-            self.sm.put(self.desired_step_interval)
+            self.desired_step_interval = (RREQ-2)/(STEP_P_LAP*MICROSTEPS*speed_rps_abs)-(1+2+1)
+            self.sm.put(int(self.desired_step_interval))
 
 
 
@@ -97,4 +98,5 @@ class Motor:
     
     
     
+
 

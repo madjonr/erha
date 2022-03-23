@@ -21,20 +21,19 @@ class MotorController():
         self.motor_r_step = Pin(11, Pin.OUT)
         self.motor_r_en = Pin(15, Pin.OUT)
 
-        self.motor_left = Motor(self.motor_l_direction, self.motor_l_step, self.motor_l_en, False)
-        self.motor_right = Motor(self.motor_r_direction, self.motor_r_step, self.motor_r_en, False)
+        self.motor_left = Motor(0, self.motor_l_direction, self.motor_l_step, self.motor_l_en, False)
+        self.motor_right = Motor(1, self.motor_r_direction, self.motor_r_step, self.motor_r_en, False)
 
         self.enabled: bool = True
 
     def readyRoutine(self):
-        self.setSpeed(1, 1)
+        self.setSpeed(1,1)
+        utime.sleep_ms(5000)
+        self.setSpeed(0.0,0.0)
         utime.sleep_ms(1000)
-        self.setSpeed(0.0, 0.0)
-        utime.sleep_ms(1000)
-        self.setSpeed(-0.2, -0.2)
-        utime.sleep_ms(1000)
-        self.setSpeed(0.0, 0.0)
-        utime.sleep_ms(1000)
+        self.setSpeed(-0.2,-0.2)
+        utime.sleep_ms(2000)
+        self.setSpeed(0.0,0.0)
 
     def enable(self):
         self.motor_left.enable()
@@ -65,4 +64,5 @@ class MotorController():
     # def run(self):
     #     self.motor_left.run()
     #     self.motor_right.run()
+
 
