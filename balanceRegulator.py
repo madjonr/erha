@@ -40,7 +40,8 @@ class BalanceRegulator():
         self.turn_speed = 0                      # 转向速度
         self.filter = Filter()                   # 滤波器类
         self.motors = MotorController()          # 马达控制类
-        self.pid = PID()                         # PID控制器
+        self.pid = PID(1.0, 0.0, 0.0, 0.0)                         # PID控制器
+        self.pid.output_limits = (-5, 5)
         self.imu = imu                           # MPU6050获取姿态数据
         self.mAverageRpsVelocity = 0             # 平均转速，中间量
         self.error_sum = 0                       # PI 计算时的累积误差
@@ -97,7 +98,7 @@ class BalanceRegulator():
         dt = utime.ticks_diff(now, self.prev_time)/1000000               # 求出时间间隔
         self.prev_time = now
         mpu_angle = self.filter.getAngel(self.imu, dt)                   # 获取MPU6050的姿态角度
-        #print('angle:{}'.format(mpu_angle))
+        print('angle:{}'.format(mpu_angle))
         current_angle = mpu_angle + ANGLE_OFFSET                         # 加上偏置的角度，求得当前的实际偏离的角度
         
         if abs(current_angle) < WAKEUP_ANGLE:                            # 在唤醒角度内，唤醒马达
@@ -112,9 +113,9 @@ class BalanceRegulator():
             estimated_speed = self.estimateSpeed(dt)                     # 估算小车速度
             target_angle = self.pid.PI_Speed(estimated_speed, EXPECTED_SPEED, dt)         # 计算速度环
 
-            #regulated_delta_speed = self.pid.PD_Angel(current_angle, target_angle, dt)    # 计算直立环
-            regulated_delta_speed = self.pid.PD_Angel(current_angle, ANGLE_OFFSET, dt)
-            regulated_delta_speed = constrain(regulated_delta_speed, -5.0, 5.0)         # 约束小车的加速，防止小车过冲
+            regulated_delta_speed = self.pid.PD_Angel(current_angle, target_angle, dt)    # 计算直立环
+            #regulated_delta_speed = self.pid.PD_Angel(current_angle, ANGLE_OFFSET, dt)
+            #regulated_delta_speed = constrain(regulated_delta_speed, -2.0, 2.0)         # 约束小车的加速，防止小车过冲
             
             self.mAverageRpsVelocity += regulated_delta_speed                             # 累积小车的速度
             #print('estimatedSpeed:{}  delta_speed:{}  mAverageRpsVelocity:{}'.format(estimated_speed, regulated_delta_speed, self.mAverageRpsVelocity))

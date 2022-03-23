@@ -27,12 +27,12 @@ class MotorController():
         self.enabled: bool = True
 
     def readyRoutine(self):
-        self.setSpeed(1,1)
-        utime.sleep_ms(5000)
+        self.setSpeed(0.2,0.2)
+        utime.sleep_ms(250)
         self.setSpeed(0.0,0.0)
-        utime.sleep_ms(1000)
+        utime.sleep_ms(250)
         self.setSpeed(-0.2,-0.2)
-        utime.sleep_ms(2000)
+        utime.sleep_ms(250)
         self.setSpeed(0.0,0.0)
 
     def enable(self):

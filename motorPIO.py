@@ -1,9 +1,6 @@
 
 import rp2
 from machine import Pin
-import utime
-
-
 
 
 Direction = {'FORWARD':0, 'BACKWARD':1}
