@@ -1,14 +1,14 @@
 from machine import Pin
 
 
-Direction = {'FORWARD':True, 'BACKWARD':False}
+Direction = {'FORWARD':0, 'BACKWARD':1}
 MICROSTEPS: int = 16                                  # 步进电机的细分
 
 class Motor:
     """
     马达类
     """
-    def __init__(self,  dir_pin:Pin, step_pin:Pin, en_pin:Pin, side=False, pulse_period:int=20):
+    def __init__(self,  dir_pin:Pin, step_pin:Pin, en_pin:Pin, side=False, pulse_period:int=16):
         self.step_pin: Pin = step_pin
         self.dir_pin: Pin = dir_pin
         self.en_pin: Pin = en_pin
@@ -17,8 +17,8 @@ class Motor:
         self.pulse_counter: int = 0                      # 脉冲信号计数器，中断计数器？
         self.current_step_pulse: int = 0                 # 当前的脉冲位置记录点
         self.previous_step_pulse: int = 0                # 上一次的脉冲位置记录点，当前减去上一次就是期望的脉冲周期
-        self.pulse_period_us: int = pulse_period         # 脉冲周期
-        self.desired_step_interval = 0                   # 希望的脉冲间隔
+        self.pulse_period_us: int = pulse_period         # 脉冲周期，一个脉冲信号的持续时间
+        self.desired_step_interval = 0                   # 希望步进电机运行一步时的脉冲间隔
         self.current_direction: bool = False
 
         self.enabled: bool = False
@@ -61,7 +61,10 @@ class Motor:
             self.previous_step_pulse = 0.0
         else:
             self.current_direction = Direction['FORWARD'] if speed_rps > 0 else Direction['BACKWARD']  # 确定马达的转向
-            self.desired_step_interval = 6250/self.pulse_period_us/MICROSTEPS/speed_rps_abs            # 6250是频率，要达到期望的转速，需要的脉冲间隔
+            # 5000是微秒，5毫秒转动一个步距角，200个步距角刚好是一圈，这里的速度就是圈/秒，如果要加快速度就需要将5000改小，比如2500就是2圈/秒
+            # 根据这个计算出步进电机转动一个步距角需要多少个信号周期
+            self.desired_step_interval = 5000.0/self.pulse_period_us/MICROSTEPS/speed_rps_abs
+            print('desired_step_interval:{}'.format(self.desired_step_interval))
             self.current_step_pulse = self.desired_step_interval
             self.previous_step_pulse = 0
         

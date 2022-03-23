@@ -23,7 +23,7 @@ class PID(object):
         self.speed_pid_P = 1
         self.speed_pid_I = 0.1
         self.angle_pid_P = 10
-        self.angle_pid_D = 0.01
+        self.angle_pid_D = 0.00
         self.target_angle = 1.39                 # 小车站立的目标便置角度
         
 

@@ -1,7 +1,10 @@
 
 from machine import Pin
-from motor import Motor
+from motorPIO import Motor
 import utime
+
+
+PULSE_PERIOD_us = 16
 
 
 class MotorController():
@@ -24,14 +27,14 @@ class MotorController():
         self.enabled: bool = True
 
     def readyRoutine(self):
-        self.setSpeed(0.2,0.2)
-        utime.sleep_ms(250)
-        self.setSpeed(0.0,0.0)
-        utime.sleep_ms(250)
-        self.setSpeed(-2.0,-0.2)
-        utime.sleep_ms(250)
-        self.setSpeed(0.0,0.0)
-        utime.sleep_ms(250)
+        self.setSpeed(1, 1)
+        utime.sleep_ms(1000)
+        self.setSpeed(0.0, 0.0)
+        utime.sleep_ms(1000)
+        self.setSpeed(-0.2, -0.2)
+        utime.sleep_ms(1000)
+        self.setSpeed(0.0, 0.0)
+        utime.sleep_ms(1000)
 
     def enable(self):
         self.motor_left.enable()
@@ -59,7 +62,7 @@ class MotorController():
         self.motor_right.setRPS(motor_r_rps)
 
 
-    def run(self):
-        self.motor_left.run()
-        self.motor_right.run()
+    # def run(self):
+    #     self.motor_left.run()
+    #     self.motor_right.run()
 

@@ -59,9 +59,9 @@ class Filter(object):
         # angle = degrees(atan(imu.accel.y/imu.accel.z))
         if isnan(self.__angle):
             self.__angle = angle
-        self.__delta = utime.ticks_diff(utime.ticks_us(), self.__time) / 1000000
-        self.__time = utime.ticks_us()
-        self.__angle = (1 - self.__alpha) * (self.__angle + imu.gyro.x * self.__delta) + self.__alpha * angle
+        #self.__delta = dt
+        #self.__time = utime.ticks_us()
+        self.__angle = (1 - self.__alpha) * (self.__angle + imu.gyro.x * dt) + self.__alpha * angle
 
         # correction = self.constrain(imu.gyro.x, self.__x_gyro_offset-10, self.__x_gyro_offset-10)
         # self.__x_gyro_offset = self.__x_gyro_offset * 0.9995 + correction * 0.0005

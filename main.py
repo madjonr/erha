@@ -2,7 +2,20 @@ from machine import Pin, I2C, UART, Timer
 from balanceRegulator import BalanceRegulator
 from imu import MPU6050
 from motorController import MotorController
+import utime
 
+
+FREQ:int = 1000
+def limitFreq(freq):
+    """
+    Timer设置的频率不能超过0.1M，也就是100000
+    """
+    if freq < 1:
+        return 1
+    elif freq > 100000:
+        return 100000
+    else:
+        return freq
 
 class InvertedPendulumRobot():
     def __init__(self):
@@ -13,16 +26,26 @@ class InvertedPendulumRobot():
 
         self.motors = MotorController()
         self.regulator = BalanceRegulator(self.imu)
+        self.last_time = utime.ticks_us()
 
     def ISR(self, tim):
-        self.motors.run()        
+        #self.motors.run()
+        now = utime.ticks_us()
+        delta_time  = utime.ticks_diff(now, self.last_time)
+        print(delta_time)
+        self.last_time = now
+        
+        
+
 
 
 if __name__ == '__main__':
     erha = InvertedPendulumRobot()
 
-    tim = Timer()
-    tim.init(freq=6250, mode=Timer.PERIODIC, callback=erha.ISR)
+    #tim = Timer()
+    #signal_freq = limitFreq(FREQ)
+    # 16微秒执行一次频率就是1/0.000016=62500
+    #tim.init(freq=signal_freq, mode=Timer.PERIODIC, callback=erha.ISR)
 
     #erha.setTimerInterrupt()
     erha.motors.readyRoutine()
