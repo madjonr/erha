@@ -8,7 +8,7 @@ MICROSTEPS: int = 16
 STEP_P_LAP:int = 200
 
 SPEED_MIN:float = 0
-SPEED_MAX:float = 4
+SPEED_MAX:float = 5
 
 FREQ = 200000
 

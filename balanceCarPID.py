@@ -10,12 +10,23 @@ def _clamp(value, limits):
         return lower
     return value
 
+
+def constrain(value, limit_min, limit_max):
+    if value < limit_min:
+        return limit_min
+    elif value > limit_max:
+        return limit_max
+    else:
+        return value
+
+
+
 _current_time = utime.ticks_ms
 
 class PID(object):
     """A simple PID controller."""
     
-    def __init__(self, speed_Kp=1.0, speed_Ki=0.0, angel_Kp=1.0, angle_Kd=0.0, sample_time=0.01, output_limits=(None, None), auto_mode=True, proportional_on_measurement=False, error_map=False):
+    def __init__(self, speed_Kp=1.0, speed_Ki=0.0, angle_Kp=1.0, angle_Kd=0.0):
         """
         Initialize a new PID controller.
         param:
@@ -30,161 +41,31 @@ class PID(object):
         """
         self.speed_Kp = speed_Kp
         self.speed_Ki = speed_Ki
-        self.angel_Kp = angel_Kp
+        self.angle_Kp = angle_Kp
         self.angle_Kd = angle_Kd
-        self.sample_time = sample_time
-
-        self._min_output, self._max_output = None, None
-        self._auto_mode = auto_mode
-        self.proportional_on_measurement = proportional_on_measurement
-        self.error_map = False
-
-        self._proportional = 0                  # 比例系数
-        self._integral = 0                      # 积分
-        self._derivative = 0                    # 微分
-
-        self._last_time = None                  # 最后一次采样时间
-        self._last_output = None                # 最后一次输出
-        self._last_input = None                 # 最后一次输入
-
-        self.output_limits = output_limits
-        self.reset()
-
-    @property
-    def output_limits(self):
-        """
-        The current output limits as a 2-tuple: (lower, upper).
-        See also the *output_limits* parameter in :meth:`PID.__init__`.
-        """
-        return self._min_output, self._max_output
-
-    @output_limits.setter
-    def output_limits(self, limits):
-        """Set the output limits."""
-        if limits is None:
-            self._min_output, self._max_output = None, None
-            return
-
-        min_output, max_output = limits
-
-        if (None not in limits) and (max_output < min_output):
-            raise ValueError('lower limit must be less than upper limit')
-
-        self._min_output = min_output
-        self._max_output = max_output
-
-        self._integral = _clamp(self._integral, self.output_limits)
-        self._last_output = _clamp(self._last_output, self.output_limits)
+        self._error_sum = 0                     # 积分项的误差累积和
+        self.prev_error_angle = 0               # 上一次的角度误差
 
 
-    def PI_Speed(self, input_, target, dt=None):
-        if not self._auto_mode:                  # 如果不是自动模式就返回上一次的输出值，防止振荡。
-            return self._last_output
-
-        now = _current_time()
-        if dt is None:                           # 微分时的时间步长
-            dt = now - self._last_time if (now - self._last_time) else 1e-16
-        elif dt <= 0:
-            raise ValueError('dt has negative value {}, must be positive'.format(dt))
-
-        if self.sample_time is not None and dt < self.sample_time and self._last_output is not None:
-            # Only update every sample_time seconds
-            return self._last_output
-
-        # Compute error terms
-        # 计算误差
-        error = target - input_
-        d_input = input_ - (self._last_input if (self._last_input is not None) else input_)  # 输入的增量
-
-        # Check if must map the error
-        if self.error_map:
-            error = self.error_map(error)
-
-        # Compute the proportional term
-        if not self.proportional_on_measurement:
-            # Regular proportional-on-error, simply set the proportional term
-            self._proportional = self.speed_Kp * error
-        else:
-            # Add the proportional error on measurement to error_sum
-            self._proportional -= self.speed_Kp * d_input
-
-        # Compute integral and derivative terms
-        self._integral += self.speed_Ki * error * dt
-        self._integral = _clamp(self._integral, self.output_limits)  # Avoid integral windup
-
-        #self._derivative = -self.Kd * d_input / dt
+    def PI_Speed(self, est_speed, exp_speed, dt=None):
+        speed_error = exp_speed - est_speed
+        self._error_sum = constrain(self._error_sum + speed_error, -100000, 100000)
 
         # Compute final output
-        output = self._proportional + self._integral
-        output = _clamp(output, self.output_limits)
-
-        # Keep track of state
-        self._last_output = output
-        self._last_input = input_
-        self._last_time = now
+        output = self.speed_Kp * speed_error + self.speed_Ki * self._error_sum * dt
+        #output = constrain(output, -100, 100)
 
         return output
     
     
-    def PD_Angel(self, input_, target, dt=None):
-        if not self._auto_mode:                  # 如果不是自动模式就返回上一次的输出值，防止振荡。
-            return self._last_output
-
-        now = _current_time()
-        if dt is None:                           # 微分时的时间步长
-            dt = now - self._last_time if (now - self._last_time) else 1e-16
-        elif dt <= 0:
-            raise ValueError('dt has negative value {}, must be positive'.format(dt))
-
-        if self.sample_time is not None and dt < self.sample_time and self._last_output is not None:
-            # Only update every sample_time seconds
-            return self._last_output
-
+    def PD_Angel(self, curr_angle, target_angle, dt=None):
         # Compute error terms
         # 计算误差
-        error = target - input_
-        d_input = input_ - (self._last_input if (self._last_input is not None) else input_)  # 输入的增量
-
-        # Check if must map the error
-        if self.error_map:
-            error = self.error_map(error)
-
-        # Compute the proportional term
-        if not self.proportional_on_measurement:
-            # Regular proportional-on-error, simply set the proportional term
-            self._proportional = self.angel_Kp * error
-        else:
-            # Add the proportional error on measurement to error_sum
-            self._proportional -= self.angel_Kp * d_input
-
-        self._derivative = -self.angle_Kd * d_input / dt
+        error_angle = target_angle - curr_angle
+        d_input = constrain(self.angle_Kd * (error_angle - self.prev_error_angle) / dt, -0.2, 0.2)
 
         # Compute final output
-        output = self._proportional + self._derivative
-        output = _clamp(output, self.output_limits)
-
-        # Keep track of state
-        self._last_output = output
-        self._last_input = input_
-        self._last_time = now
+        output = self.angle_Kp * error_angle + d_input
 
         return output
     
-    
-        
-    def reset(self):
-        """
-        Reset the PID controller internals.
-
-        This sets each term to 0 as well as clearing the integral, the last output and the last
-        input (derivative calculation).
-        """
-        self._proportional = 0
-        self._integral = 0
-        self._derivative = 0
-
-        self._integral = _clamp(self._integral, self.output_limits)
-
-        self._last_time = _current_time()
-        self._last_output = None
-        self._last_input = None
