@@ -78,7 +78,7 @@ class PID(object):
 
 
     def PI_Speed(self, input_, target, dt=None):
-        if not self.auto_mode:                  # 如果不是自动模式就返回上一次的输出值，防止振荡。
+        if not self._auto_mode:                  # 如果不是自动模式就返回上一次的输出值，防止振荡。
             return self._last_output
 
         now = _current_time()
@@ -127,7 +127,7 @@ class PID(object):
     
     
     def PD_Angel(self, input_, target, dt=None):
-        if not self.auto_mode:                  # 如果不是自动模式就返回上一次的输出值，防止振荡。
+        if not self._auto_mode:                  # 如果不是自动模式就返回上一次的输出值，防止振荡。
             return self._last_output
 
         now = _current_time()
@@ -157,7 +157,7 @@ class PID(object):
             # Add the proportional error on measurement to error_sum
             self._proportional -= self.angel_Kp * d_input
 
-        self._derivative = -self.angel_Kp * d_input / dt
+        self._derivative = -self.angle_Kd * d_input / dt
 
         # Compute final output
         output = self._proportional + self._derivative
@@ -169,5 +169,22 @@ class PID(object):
         self._last_time = now
 
         return output
+    
+    
         
+    def reset(self):
+        """
+        Reset the PID controller internals.
 
+        This sets each term to 0 as well as clearing the integral, the last output and the last
+        input (derivative calculation).
+        """
+        self._proportional = 0
+        self._integral = 0
+        self._derivative = 0
+
+        self._integral = _clamp(self._integral, self.output_limits)
+
+        self._last_time = _current_time()
+        self._last_output = None
+        self._last_input = None

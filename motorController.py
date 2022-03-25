@@ -36,8 +36,8 @@ class MotorController():
         self.setSpeed(0.0,0.0)
 
     def enable(self):
-        self.motor_left.enable()
-        self.motor_right.enable()
+        self.motor_left.setEnable()
+        self.motor_right.setEnable()
         self.enabled = True
 
     def disable(self):

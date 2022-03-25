@@ -3,14 +3,14 @@ import rp2
 from machine import Pin
 
 
-Direction = {'FORWARD':0, 'BACKWARD':1}
+Direction = {'FORWARD':1, 'BACKWARD':0}
 MICROSTEPS: int = 16
 STEP_P_LAP:int = 200
 
 SPEED_MIN:float = 0
-SPEED_MAX:float = 3
+SPEED_MAX:float = 4
 
-RREQ = 200000
+FREQ = 200000
 
 @rp2.asm_pio(set_init=rp2.PIO.OUT_LOW, out_shiftdir=rp2.PIO.SHIFT_RIGHT, autopull=True)
 def blink():
@@ -39,23 +39,26 @@ class Motor:
         self.en_pin: Pin = en_pin
         self.side = side
 
-        self.sm = rp2.StateMachine(sm_id, blink, freq=RREQ, set_base=step_pin)
+        self.sm = rp2.StateMachine(sm_id, blink, freq=FREQ, set_base=step_pin)
         self.sm.active(1)
+        self.enable = False
 
 
-    def enable(self):
+    def setEnable(self):
         """
         启动电机
         """
-        self.sm.active(1)
-        self.dir_pin.value(0)
+        #self.sm.active(1)
+        self.en_pin.value(0)
+        self.enable = True
 
     def disable(self):
         """
         停止电机旋转
         """
-        self.sm.active(0)
-        self.dir_pin.value(1)
+        #self.sm.active(0)
+        self.en_pin.value(1)
+        self.enable = False
 
     def speed_limits(self, speed):
         if speed < SPEED_MIN:
@@ -72,14 +75,16 @@ class Motor:
         :param speed_rps: 期望的马达转速, 42电机估计只能到3，再高就容易丢步
         """
         speed_rps_abs = self.speed_limits(abs(speed_rps))
-        if speed_rps_abs < 0.001:                        # 转速很小的情况,电机停止？
+        if speed_rps_abs < 0.001 and self.enable:                        # 转速很小的情况,电机停止？
             self.disable()
         else:
-            self.enable()
+            if not self.enable:
+                self.enable()
             self.current_direction = Direction['FORWARD'] if speed_rps > 0 else Direction['BACKWARD']  # 确定马达的转向
+            self.dir_pin.value(self.current_direction)
             #
-            self.desired_step_interval = (RREQ-2)/(STEP_P_LAP*MICROSTEPS*speed_rps_abs)-(1+2+1)
-            self.sm.put(int(self.desired_step_interval))
+            self.desired_step_interval =  FREQ/(STEP_P_LAP*MICROSTEPS*speed_rps_abs) -(2+1+1+1+1)
+            self.sm.put(round(self.desired_step_interval))
 
 
 

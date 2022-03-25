@@ -51,6 +51,7 @@ if __name__ == '__main__':
             else:
                 print('other control')
             # erha.blue.write("recived: {} \r\n".format(msg))
+        #utime.sleep_ms(5)
 
 
 

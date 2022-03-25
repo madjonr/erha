@@ -8,7 +8,7 @@ from balanceCarPID import PID
 
 
 
-ANGLE_OFFSET = 1.39                  # 角度偏移量
+ANGLE_OFFSET = 1.1                   # 角度偏移量
 MAX_SPEED_CMPS = 100.0               # 最大速度：100CM/S
 EXPECTED_SPEED = 0                   # 小车的期望速度，小车静止
 MAX_TURN_SPEED = 1.0                 # 最大转向速度
@@ -40,8 +40,8 @@ class BalanceRegulator():
         self.turn_speed = 0                      # 转向速度
         self.filter = Filter()                   # 滤波器类
         self.motors = MotorController()          # 马达控制类
-        self.pid = PID(1.0, 0.0, 0.0, 0.0)                         # PID控制器
-        self.pid.output_limits = (-5, 5)
+        self.pid = PID(0.2, 0.03, 0.3, 0.0012)                         # PID控制器
+        self.pid.output_limits = (-100, 100)
         self.imu = imu                           # MPU6050获取姿态数据
         self.mAverageRpsVelocity = 0             # 平均转速，中间量
         self.error_sum = 0                       # PI 计算时的累积误差
@@ -81,6 +81,7 @@ class BalanceRegulator():
         av_cmps_vel = ((self.L_rps_vel + self.R_rps_vel) / 2.0) * 20
         # 这里是通过当前的角度和前一次的角度之差除以两次之间的时间求出角速度，再乘以轮子的轴心到MPU6050模块的距离得到车的速度
         sensor_cmps_vel = radians(self.current_angle - self.previous_angle) / dt * 8.3
+        print('av:{}   sensor:{}'.format(av_cmps_vel, sensor_cmps_vel))
         # 这里是为什么？
         estimated_speed = -av_cmps_vel + sensor_cmps_vel
         
@@ -98,8 +99,8 @@ class BalanceRegulator():
         dt = utime.ticks_diff(now, self.prev_time)/1000000               # 求出时间间隔
         self.prev_time = now
         mpu_angle = self.filter.getAngel(self.imu, dt)                   # 获取MPU6050的姿态角度
-        print('angle:{}'.format(mpu_angle))
-        current_angle = mpu_angle + ANGLE_OFFSET                         # 加上偏置的角度，求得当前的实际偏离的角度
+        #print('angle:{}'.format(mpu_angle))
+        current_angle = mpu_angle - ANGLE_OFFSET                         # 加上偏置的角度，求得当前的实际偏离的角度
         
         if abs(current_angle) < WAKEUP_ANGLE:                            # 在唤醒角度内，唤醒马达
             self.motors.enable()
@@ -116,9 +117,9 @@ class BalanceRegulator():
             regulated_delta_speed = self.pid.PD_Angel(current_angle, target_angle, dt)    # 计算直立环
             #regulated_delta_speed = self.pid.PD_Angel(current_angle, ANGLE_OFFSET, dt)
             #regulated_delta_speed = constrain(regulated_delta_speed, -2.0, 2.0)         # 约束小车的加速，防止小车过冲
-            
-            self.mAverageRpsVelocity += regulated_delta_speed                             # 累积小车的速度
-            #print('estimatedSpeed:{}  delta_speed:{}  mAverageRpsVelocity:{}'.format(estimated_speed, regulated_delta_speed, self.mAverageRpsVelocity))
+            #regulated_delta_speed = self.filter.filter_speed(regulated_delta_speed, 0.5)  # 滤波平滑
+            self.mAverageRpsVelocity = +regulated_delta_speed                             # 累积小车的速度
+            #print('current_angle:{}  mAverageRpsVelocity:{}'.format(current_angle, self.mAverageRpsVelocity))
 
             self.L_rps_vel = self.mAverageRpsVelocity - self.turn_speed                   # 左轮加上转向的速度数据
             self.R_rps_vel = self.mAverageRpsVelocity + self.turn_speed                   # 右轮加上转向的速度数据
