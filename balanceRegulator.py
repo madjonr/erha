@@ -13,7 +13,7 @@ MAX_SPEED_CMPS = 100.0               # 最大速度：100CM/S
 EXPECTED_SPEED = 0                   # 小车的期望速度，小车静止
 MAX_TURN_SPEED = 1.0                 # 最大转向速度
 
-DEAD_ANGLE = 50.0                    # 停机角度，小车超过这个角度就停机
+DEAD_ANGLE = 30.0                    # 停机角度，小车超过这个角度就停机
 WAKEUP_ANGLE = 1.0                   # 唤醒角度，小车在这个角度范围内就唤醒
 
 
@@ -40,8 +40,7 @@ class BalanceRegulator():
         self.turn_speed = 0                      # 转向速度
         self.filter = Filter()                   # 滤波器类
         self.motors = MotorController()          # 马达控制类
-        self.pid = PID(0.2, 0.004, 0.3, 0.001)                         # PID控制器
-        #self.pid.output_limits = (-100, 100)
+        self.pid = PID(0.01, 0.004, 0.00098, 0.0005)                         # PID控制器
         self.imu = imu                           # MPU6050获取姿态数据
         self.mAverageRpsVelocity = 0             # 平均转速，中间量
         self.error_sum = 0                       # PI 计算时的累积误差
@@ -81,12 +80,12 @@ class BalanceRegulator():
         av_cmps_vel = ((self.L_rps_vel + self.R_rps_vel) / 2.0)*20
         # 这里是通过当前的角度和前一次的角度之差除以两次之间的时间求出角速度，再乘以轮子的轴心到MPU6050模块的距离得到车的速度
         sensor_cmps_vel = radians(self.current_angle - self.previous_angle) / dt * 10.5
-        #print('av:{}   sensor:{}'.format(av_cmps_vel, sensor_cmps_vel))
+        #print('av:{}   sensor:{}'.format(-av_cmps_vel, sensor_cmps_vel))
         # 这里是为什么？
         estimated_speed = -av_cmps_vel + sensor_cmps_vel
         
         # 对速度进行平滑处理
-        self.filtered_estimated_speed = 0.8 * self.filtered_estimated_speed + 0.2 * estimated_speed
+        self.filtered_estimated_speed = 0.8 * self.filtered_estimated_speed - 0.2 * av_cmps_vel
         
         return self.filtered_estimated_speed
     
@@ -115,11 +114,11 @@ class BalanceRegulator():
 
             regulated_delta_speed = self.pid.PD_Angel(self.current_angle, target_angle, dt)    # 计算直立环
             #regulated_delta_speed = self.pid.PD_Angel(self.current_angle, ANGLE_OFFSET, dt)
-            #regulated_delta_speed = constrain(regulated_delta_speed, -2.0, 2.0)         # 约束小车的加速，防止小车过冲
+            regulated_delta_speed = constrain(regulated_delta_speed, -1.0, 1.0)         # 约束小车的加速，防止小车过冲
             #regulated_delta_speed = self.filter.filter_speed(regulated_delta_speed, 0.5)  # 滤波平滑
-            self.mAverageRpsVelocity = regulated_delta_speed                             # 累积小车的速度
-            self.mAverageRpsVelocity = constrain(self.mAverageRpsVelocity, -6, 6)
-            print('current_angle:{}  mAverageRpsVelocity:{}'.format(self.current_angle, self.mAverageRpsVelocity))
+            self.mAverageRpsVelocity += regulated_delta_speed                             # 累积小车的速度
+            self.mAverageRpsVelocity = constrain(self.mAverageRpsVelocity, -4.5, 4.5)
+            #print('current_angle:{}  mAverageRpsVelocity:{}'.format(self.current_angle, self.mAverageRpsVelocity))
 
             self.L_rps_vel = self.mAverageRpsVelocity - self.turn_speed                   # 左轮加上转向的速度数据
             self.R_rps_vel = self.mAverageRpsVelocity + self.turn_speed                   # 右轮加上转向的速度数据

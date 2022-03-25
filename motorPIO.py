@@ -48,7 +48,7 @@ class Motor:
         """
         启动电机
         """
-        #self.sm.active(1)
+        self.sm.active(1)
         self.en_pin.value(0)
         self.enable = True
 
@@ -56,7 +56,7 @@ class Motor:
         """
         停止电机旋转
         """
-        #self.sm.active(0)
+        self.sm.active(0)
         self.en_pin.value(1)
         self.enable = False
 
