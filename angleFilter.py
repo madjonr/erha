@@ -55,8 +55,8 @@ class Filter(object):
         """
         互补滤波，外部控制采样时间
         """
-        angle = degrees(atan(imu.accel.y / sqrt(imu.accel.x ** 2 + imu.accel.z ** 2)))
-        # angle = degrees(atan(imu.accel.y/imu.accel.z))
+        #angle = degrees(atan(imu.accel.y / sqrt(imu.accel.x ** 2 + imu.accel.z ** 2)))
+        angle = degrees(atan(imu.accel.y/imu.accel.z))
         if isnan(self.__angle):
             self.__angle = angle
         #self.__delta = dt
