@@ -36,18 +36,20 @@ class Filter(object):
         """
         互补滤波, 自身控制采样时间
         """
-        angle = degrees(atan(imu.accel.y/sqrt(imu.accel.x**2+imu.accel.z**2)))
-        #angle = degrees(atan(imu.accel.y/imu.accel.z))
+        #angle = degrees(atan(imu.accel.y/sqrt(imu.accel.x**2+imu.accel.z**2)))
+        angle = degrees(atan(imu.accel.y / imu.accel.z))
         if isnan(self.__angle):
             self.__angle = angle          
         self.__delta = utime.ticks_diff(utime.ticks_us(), self.__time)/1000000
         self.__time  = utime.ticks_us()
         self.__angle = (1-self.__alpha) * (self.__angle + imu.gyro.x * self.__delta) + self.__alpha * angle
-        
+
+        #output_angle = (1-self.__alpha) * (self.__angle + imu.gyro.x * self.__delta) + self.__alpha * angle
         #correction = self.constrain(imu.gyro.x, self.__x_gyro_offset-10, self.__x_gyro_offset-10)
         #self.__x_gyro_offset = self.__x_gyro_offset * 0.9995 + correction * 0.0005
-        
-        
+
+        #output_angle = self.__angle * 0.5 + output_angle * 0.5
+        #self.__angle = output_angle
         return self.__angle
     
     
@@ -105,7 +107,7 @@ class Filter(object):
         """
         校准陀螺仪
         """
-        gyro_cal_ok = True;
+        gyro_cal_ok = True
         values = []
         value = 0
         dev = 0

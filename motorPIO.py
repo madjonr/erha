@@ -75,7 +75,7 @@ class Motor:
         :param speed_rps: 期望的马达转速, 42电机估计只能到3，再高就容易丢步
         """
         speed_rps_abs = self.speed_limits(abs(speed_rps))
-        if speed_rps_abs < 0.001 and self.enable:                        # 转速很小的情况,电机停止？
+        if speed_rps_abs < 0.01 and self.enable:                        # 转速很小的情况,电机停止？
             self.disable()
         else:
             if not self.enable:

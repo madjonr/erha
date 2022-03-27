@@ -62,8 +62,7 @@ class PID(object):
         # Compute error terms
         # 计算误差
         error_angle = target_angle - curr_angle
-        d_input = constrain(self.angle_Kd * (error_angle - self.prev_error_angle) / dt, -0.2, 0.2)
-
+        d_input = constrain(self.angle_Kd * (error_angle - self.prev_error_angle) / dt, -0.15, 0.15)
         # Compute final output
         output = self.angle_Kp * error_angle + d_input
 
