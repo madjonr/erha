@@ -43,13 +43,20 @@ class PID(object):
         self.speed_Ki = speed_Ki
         self.angle_Kp = angle_Kp
         self.angle_Kd = angle_Kd
+        self.turn_Kp = 0.1
+        self.turn_Kd = 0.0001
+
         self._error_sum = 0                     # 积分项的误差累积和
         self.prev_error_angle = 0               # 上一次的角度误差
 
 
+
     def PI_Speed(self, est_speed, exp_speed, dt=None):
+        """
+        速度PI控制
+        """
         speed_error = exp_speed - est_speed
-        self._error_sum = constrain(self._error_sum + speed_error, -100000, 100000)
+        self._error_sum = constrain(self._error_sum + speed_error, -1000000, 1000000)
 
         # Compute final output
         output = self.speed_Kp * speed_error + self.speed_Ki * self._error_sum * dt
@@ -62,9 +69,21 @@ class PID(object):
         # Compute error terms
         # 计算误差
         error_angle = target_angle - curr_angle
-        d_input = constrain(self.angle_Kd * (error_angle - self.prev_error_angle) / dt, -0.15, 0.15)
+        d_input = constrain(self.angle_Kd * (error_angle - self.prev_error_angle) / dt, -0.25, 0.25)
         # Compute final output
         output = self.angle_Kp * error_angle + d_input
 
         return output
-    
+
+    def PD_Turn(self, turn_target, gyro_z):
+        """
+        转向PD控制
+        """
+        if turn_target != 0:
+            output = turn_target * self.turn_Kp + gyro_z * self.turn_Kd
+            output = constrain(output, -0.5, 0.5)
+        else:
+            output = 0
+        return  output
+
+
