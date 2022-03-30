@@ -1,6 +1,10 @@
 from math import atan, sqrt, degrees, isnan
+from machine import I2C, Pin
+from imu import MPU6050
 import utime
 
+
+RadiusToAngle = 57.2958
 
 class Filter(object):
     """
@@ -8,15 +12,18 @@ class Filter(object):
     """
 
     def __init__(self):
-        self.last_angle = 0
-        self.last_speed = 0
+        self.last_angle = 0.0
+        self.last_speed = 0.0
         self.last_gyro_angle = None
 
-        self.__angle = float('nan')
+        self.__angle = 0.0
 
         self.__alpha = 0.05
         self.__x_gyro_offset = 0.0
         self.__time = utime.ticks_us()
+
+        _i2c = I2C(1, sda=Pin(26), scl=Pin(27), freq=400000)
+        self.imu = MPU6050(_i2c)
 
 
     def calculate_angle_acceleration(self, ax, ay, az):
@@ -28,17 +35,17 @@ class Filter(object):
         pitch = int(degrees(atan(-ax / sqrt(ay ** 2 + az ** 2 + 1e-16))))
         return (roll, pitch)
 
-    def complementary(self, imu):
+    def complementary(self):
         """
         互补滤波, 自身控制采样时间
         """
-        # angle = degrees(atan(imu.accel.y/sqrt(imu.accel.x**2+imu.accel.z**2)))
-        angle = degrees(atan(imu.accel.y / imu.accel.z))
-        if isnan(self.__angle):
-            self.__angle = angle
+        accel_x, accel_y, accel_z = self.imu.accel.xyz
+        gyro_x, _, _ = self.imu.gyro.xyz
+        angle = degrees(atan(accel_y/sqrt(accel_x**2+accel_z**2)))
+        # angle = atan(self.imu.accel.y / self.imu.accel.z)*RadiusToAngle
         __delta = utime.ticks_diff(utime.ticks_us(), self.__time) / 1000000
         self.__time = utime.ticks_us()
-        self.__angle = (1 - self.__alpha) * (self.__angle + imu.gyro.x * __delta) + self.__alpha * angle
+        self.__angle = (1 - self.__alpha) * (self.__angle + gyro_x * __delta) + self.__alpha * angle
 
         # output_angle = (1-self.__alpha) * (self.__angle + imu.gyro.x * self.__delta) + self.__alpha * angle
         # correction = self.constrain(imu.gyro.x, self.__x_gyro_offset-10, self.__x_gyro_offset-10)
@@ -48,17 +55,16 @@ class Filter(object):
         # self.__angle = output_angle
         return self.__angle
 
-    def getAngel(self, imu, dt):
+    def getAngel(self, dt):
         """
         互补滤波，外部控制采样时间
         """
-        # angle = degrees(atan(imu.accel.y / sqrt(imu.accel.x ** 2 + imu.accel.z ** 2)))
-        angle = degrees(atan(imu.accel.y / imu.accel.z))
-        if isnan(self.__angle):
-            self.__angle = angle
-        # self.__delta = dt
-        # self.__time = utime.ticks_us()
-        self.__angle = (1 - self.__alpha) * (self.__angle + imu.gyro.x * dt) + self.__alpha * angle
+        _, accel_y, accel_z = self.imu.accel.xyz
+        gyro_x, _, _ = self.imu.gyro.xyz
+
+        # angle = atan(self.imu.accel.y / sqrt(self.imu.accel.x ** 2 + self.imu.accel.z ** 2))*RadiusToAngle
+        angle = degrees(atan(accel_y  / accel_z))
+        self.__angle = (1 - self.__alpha) * (self.__angle + gyro_x * dt) + self.__alpha * angle
 
         # correction = self.constrain(imu.gyro.x, self.__x_gyro_offset-10, self.__x_gyro_offset-10)
         # self.__x_gyro_offset = self.__x_gyro_offset * 0.9995 + correction * 0.0005

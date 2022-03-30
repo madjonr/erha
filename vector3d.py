@@ -30,9 +30,9 @@ from math import sqrt, degrees, acos, atan2
 
 def default_wait():
     '''
-    delay of 50 ms
+    delay of 200 ms
     '''
-    sleep_ms(50)
+    sleep_ms(200)
 
 
 class Vector3d(object):

@@ -56,7 +56,8 @@ class PID(object):
         速度PI控制
         """
         speed_error = exp_speed - est_speed
-        self._error_sum = constrain(self._error_sum + speed_error, -1000000, 1000000)
+        self._error_sum += speed_error
+        # self._error_sum = constrain(self._error_sum, -1000000, 1000000)
 
         # Compute final output
         output = self.speed_Kp * speed_error + self.speed_Ki * self._error_sum * dt
@@ -69,7 +70,8 @@ class PID(object):
         # Compute error terms
         # 计算误差
         error_angle = target_angle - curr_angle
-        d_input = constrain(self.angle_Kd * (error_angle - self.prev_error_angle) / dt, -0.25, 0.25)
+        # d_input = constrain(self.angle_Kd * (error_angle - self.prev_error_angle) / dt, -0.25, 0.25)
+        d_input = self.angle_Kd * (error_angle - self.prev_error_angle) / dt
         # Compute final output
         output = self.angle_Kp * error_angle + d_input
 
