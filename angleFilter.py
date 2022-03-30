@@ -10,12 +10,7 @@ class Filter(object):
     """
     滤波
     """
-
     def __init__(self):
-        self.last_angle = 0.0
-        self.last_speed = 0.0
-        self.last_gyro_angle = None
-
         self.__angle = 0.0
 
         self.__alpha = 0.05
@@ -35,6 +30,7 @@ class Filter(object):
         pitch = int(degrees(atan(-ax / sqrt(ay ** 2 + az ** 2 + 1e-16))))
         return (roll, pitch)
 
+    @micropython.native
     def complementary(self):
         """
         互补滤波, 自身控制采样时间
@@ -55,6 +51,7 @@ class Filter(object):
         # self.__angle = output_angle
         return self.__angle
 
+    @micropython.native
     def getAngel(self, dt):
         """
         互补滤波，外部控制采样时间
@@ -71,25 +68,6 @@ class Filter(object):
 
         return self.__angle
 
-    def kalman(self):
-        return False
-
-    def filter_angle(self, curent_angle):
-        """
-        一价滤波器，减少抖动
-        """
-        self.last_angle *= 0.8
-        curent_angle = curent_angle * 0.2 + self.last_angle
-        self.last_angle = curent_angle
-        return curent_angle
-
-    def filter_speed(self, curent_speed, alpha):
-        """
-        一价滤波器，减少抖动
-        """
-        curent_speed = curent_speed * alpha + self.last_speed * (1 - alpha)
-        self.last_speed = curent_speed
-        return curent_speed
 
     def constrain(self, value, limit_min, limit_max):
         if value < limit_min:

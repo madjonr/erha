@@ -27,18 +27,6 @@ class PID(object):
     """A simple PID controller."""
     
     def __init__(self, speed_Kp=1.0, speed_Ki=0.0, angle_Kp=1.0, angle_Kd=0.0):
-        """
-        Initialize a new PID controller.
-        param:
-            Kp: P系数，控制比例增益的值
-            Ki: I系数，控制积分增益的值
-            Kd: D系数，控制微分增益的值
-            sample_time: 采样间隔时间
-            output_limits: 输出值限制范围
-            auto_mode: 自动模式和手动模式
-            proportional_on_measurement: 比例根据输入值计算，而不是根据误差计算
-            error_map: 将误差值转换成另一个约束值的函数
-        """
         self.speed_Kp = speed_Kp
         self.speed_Ki = speed_Ki
         self.angle_Kp = angle_Kp
@@ -49,8 +37,7 @@ class PID(object):
         self._error_sum = 0                     # 积分项的误差累积和
         self.prev_error_angle = 0               # 上一次的角度误差
 
-
-
+    @micropython.native
     def PI_Speed(self, est_speed, exp_speed, dt=None):
         """
         速度PI控制
@@ -64,8 +51,8 @@ class PID(object):
         #output = constrain(output, -100, 100)
 
         return output
-    
-    
+
+    @micropython.native
     def PD_Angel(self, curr_angle, target_angle, dt=None):
         # Compute error terms
         # 计算误差
@@ -77,6 +64,7 @@ class PID(object):
 
         return output
 
+    @micropython.native
     def PD_Turn(self, turn_target, gyro_z):
         """
         转向PD控制

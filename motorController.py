@@ -4,22 +4,18 @@ from motorPIO import Motor
 import utime
 
 
-PULSE_PERIOD_us = 16
-
-
-class MotorController():
+class MotorController(object):
     """
     马达管理类
     """
-
     def __init__(self):
-        self.motor_l_direction = Pin(0, Pin.OUT)
+        self.motor_l_direction = Pin(0, Pin.OUT, Pin.PULL_DOWN)
         self.motor_l_step = Pin(1, Pin.OUT)
-        self.motor_l_en = Pin(5, Pin.OUT)
+        self.motor_l_en = Pin(5, Pin.OUT, Pin.PULL_DOWN)
 
-        self.motor_r_direction = Pin(10, Pin.OUT)
+        self.motor_r_direction = Pin(10, Pin.OUT, Pin.PULL_DOWN)
         self.motor_r_step = Pin(11, Pin.OUT)
-        self.motor_r_en = Pin(15, Pin.OUT)
+        self.motor_r_en = Pin(15, Pin.OUT, Pin.PULL_DOWN)
 
         self.motor_left = Motor(0, self.motor_l_direction, self.motor_l_step, self.motor_l_en)
         self.motor_right = Motor(1, self.motor_r_direction, self.motor_r_step, self.motor_r_en)
@@ -27,13 +23,13 @@ class MotorController():
         self.enabled: bool = True
 
     def readyRoutine(self):
-        self.setSpeed(0.1,0.1)
+        self.setSpeed(0.1, 0.1)
         utime.sleep_ms(250)
-        self.setSpeed(0.0,0.0)
+        self.setSpeed(0.0, 0.0)
         utime.sleep_ms(250)
-        self.setSpeed(-0.1,-0.1)
+        self.setSpeed(-0.1, -0.1)
         utime.sleep_ms(250)
-        self.setSpeed(0.0,0.0)
+        self.setSpeed(0.0, 0.0)
 
     def enable(self):
         self.motor_left.setEnable()
@@ -60,9 +56,5 @@ class MotorController():
         self.motor_left.setRPS(motor_l_rps)
         self.motor_right.setRPS(motor_r_rps)
 
-
-    # def run(self):
-    #     self.motor_left.run()
-    #     self.motor_right.run()
 
 

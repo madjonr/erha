@@ -4,7 +4,7 @@ from machine import Pin
 Direction = {'FORWARD':0, 'BACKWARD':1}
 MICROSTEPS: int = 16                                  # 步进电机的细分
 
-class Motor:
+class Motor(object):
     """
     马达类
     """
