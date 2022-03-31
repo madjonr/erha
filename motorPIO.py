@@ -39,11 +39,11 @@ class Motor(object):
     """
     
     """        
-    def __init__(self, sm_id, dir_pin:Pin, step_pin:Pin, en_pin:Pin):
-        self.step_pin: Pin = step_pin
-        self.dir_pin: Pin = dir_pin
-        self.en_pin: Pin = en_pin
-        self.sm = rp2.StateMachine(sm_id, blink, freq=FREQ, set_base=step_pin)
+    def __init__(self, sm_id, dir_pin:int, step_pin:int, en_pin:int):
+        self.step_pin: Pin = Pin(step_pin, Pin.OUT)
+        self.dir_pin: Pin = Pin(dir_pin, Pin.OUT, Pin.PULL_DOWN)
+        self.en_pin: Pin = Pin(en_pin, Pin.OUT, Pin.PULL_DOWN)
+        self.sm = rp2.StateMachine(sm_id, blink, freq=FREQ, set_base=self.step_pin)
 
         self.setEnable()
 
@@ -75,7 +75,7 @@ class Motor(object):
         self.dir_pin.value(dir)
         #
         desired_step_interval =  FREQ/(STEP_P_LAP*MICROSTEPS*speed_rps_abs+1e-16) -(2+1+1+1+1)
-        self.sm.put(round(desired_step_interval))
+        self.sm.put(int(desired_step_interval))
 
 
 

@@ -1,5 +1,5 @@
+from micropython import const
 
-from machine import Pin
 from motorPIO import Motor
 import utime
 
@@ -9,13 +9,13 @@ class MotorController(object):
     马达管理类
     """
     def __init__(self):
-        self.motor_l_direction = Pin(0, Pin.OUT, Pin.PULL_DOWN)
-        self.motor_l_step = Pin(1, Pin.OUT)
-        self.motor_l_en = Pin(5, Pin.OUT, Pin.PULL_DOWN)
+        self.motor_l_direction = const(0)
+        self.motor_l_step = const(1)
+        self.motor_l_en = const(5)
 
-        self.motor_r_direction = Pin(10, Pin.OUT, Pin.PULL_DOWN)
-        self.motor_r_step = Pin(11, Pin.OUT)
-        self.motor_r_en = Pin(15, Pin.OUT, Pin.PULL_DOWN)
+        self.motor_r_direction = const(10)
+        self.motor_r_step = const(11)
+        self.motor_r_en = const(15)
 
         self.motor_left = Motor(0, self.motor_l_direction, self.motor_l_step, self.motor_l_en)
         self.motor_right = Motor(1, self.motor_r_direction, self.motor_r_step, self.motor_r_en)
