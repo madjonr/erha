@@ -36,6 +36,7 @@ class PID(object):
 
         self._error_sum = 0                     # 积分项的误差累积和
         self.prev_error_angle = 0               # 上一次的角度误差
+        self.prev_turn_speed = 0                # 上一次的转向PD输出
 
     @micropython.native
     def PI_Speed(self, est_speed, exp_speed, dt=None):
@@ -65,15 +66,15 @@ class PID(object):
         return output
 
     @micropython.native
-    def PD_Turn(self, turn_target, gyro_z):
+    def PD_Turn(self, current_turn, turn_target, dt):
         """
         转向PD控制
         """
-        if turn_target != 0:
-            output = turn_target * self.turn_Kp + gyro_z * self.turn_Kd
-            output = constrain(output, -0.5, 0.5)
-        else:
-            output = 0
+        if turn_target == 0:
+            return 0
+        error_turn = turn_target - current_turn
+        d_input = self.turn_Kd * (error_turn - self.prev_turn_speed) / dt
+        output = error_turn * self.turn_Kp + d_input
         return  output
 
 

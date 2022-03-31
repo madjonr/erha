@@ -32,20 +32,20 @@ class BalanceRegulator(object):
         self.filtered_estimated_speed = 0        # 上一次预估速度过滤后的值
         self.prev_time = utime.ticks_us()        # 上一次的采样时间
         self.expected_speed = 0                  # 预期速度
-        #self.angle_offset = 0                    # 偏置角度
+        self.angle_offset = ANGLE_OFFSET         # 偏置角度
         self.L_rps_vel = 0                       # 左边马达的转速
         self.R_rps_vel = 0                       # 右边马达的转速
         self.turn_speed = 0                      # 转向速度
         self.filter = Filter()                   # 滤波器类
         self.motors = MotorController()          # 马达控制类
-        self.pid = PID(0.008, 0.0002, 0.0015, 0.000015)                         # PID控制器
+        self.pid = PID(0.0065, 0.000065, 0.0015, 0.0000123)                         # PID控制器
         self.mAverageRpsVelocity = 0             # 平均转速，中间量
         self.error_sum = 0                       # PI 计算时的累积误差
         # self.prev_error_angle = 0                # 上一次的错误角度
         self.current_angle = 0                   # 当前计算的角度
         # self.previous_angle = 0                  # 上一次计算的角度
-        self.turn_target = 0.0
-        self.turn_speed_delta = 0
+        self.turn_target = 0.0                   # 转向目标速度
+        self.turn_speed_delta = 0                # 转向累积量
 
     def setTurnTarget(self, target):
         """
@@ -54,8 +54,9 @@ class BalanceRegulator(object):
         self.turn_target = target
         self.turn_speed_delta = 0
 
-    def setExpectedSpeed(self, direction_angle):
-        self.angle_offset = direction_angle + ANGLE_OFFSET
+    def setRelativeExpectedSpeed(self, target):
+        # self.angle_offset = target_angle+ANGLE_OFFSET
+        self.expected_speed = target
 
     @micropython.native
     def estimateSpeed(self):
@@ -77,8 +78,8 @@ class BalanceRegulator(object):
         now = utime.ticks_us()
         dt = utime.ticks_diff(now, self.prev_time)/1000000                       # 求出时间间隔, 纳秒
         self.prev_time = now
-        print(dt*1000000)
-        self.current_angle = self.filter.complementary() - ANGLE_OFFSET             # 加上偏置的角度，求得当前的实际偏离的角度
+        # print(dt*1000000)
+        self.current_angle = self.filter.complementary() - self.angle_offset             # 加上偏置的角度，求得当前的实际偏离的角度
         # self.current_angle = self.previous_angle*0.5 + current_angle*0.5          # 减去偏置的角度，求得当前的实际偏离的角度
         abs_current_angle = abs(self.current_angle)
         motor_enabled = self.motors.enabled
@@ -92,9 +93,9 @@ class BalanceRegulator(object):
         if motor_enabled:
             estimated_speed = self.estimateSpeed()                                         # 估算小车速度
             target_speed = self.pid.PI_Speed(estimated_speed, self.expected_speed, dt)         # 计算速度环
-            self.mAverageRpsVelocity += self.pid.PD_Angel(self.current_angle, ANGLE_OFFSET, dt)     # 计算直立环，累积小车的速度
+            self.mAverageRpsVelocity += self.pid.PD_Angel(self.current_angle, self.angle_offset, dt)     # 计算直立环，累积小车的速度
             self.mAverageRpsVelocity = constrain(self.mAverageRpsVelocity, -4, 4)
-            # self.turn_speed_delta = self.pid.PD_Turn(self.turn_target, self.imu.gyro.z)         # 计算转向环                                        # 累积小车的转向速度
+            self.turn_speed_delta += self.pid.PD_Turn(abs((self.L_rps_vel-self.R_rps_vel)/2), self.turn_target, dt)                        # 计算转向环,累积小车的转向速度
             self.L_rps_vel = self.mAverageRpsVelocity - target_speed + self.turn_speed_delta   # 左轮加上转向的速度数据
             self.R_rps_vel = self.mAverageRpsVelocity - target_speed - self.turn_speed_delta   # 右轮加上转向的速度数据
             self.motors.setSpeed(self.L_rps_vel, self.R_rps_vel)                               # 设定左右轮的速度
