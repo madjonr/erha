@@ -1,6 +1,6 @@
 from micropython import const
 
-from motorPIO import Motor
+from motorPWM import Motor
 import utime
 
 
@@ -17,8 +17,10 @@ class MotorController(object):
         self.motor_r_step = const(11)
         self.motor_r_en = const(15)
 
-        self.motor_left = Motor(0, self.motor_l_direction, self.motor_l_step, self.motor_l_en)
-        self.motor_right = Motor(1, self.motor_r_direction, self.motor_r_step, self.motor_r_en)
+        # self.motor_left = Motor(0, self.motor_l_direction, self.motor_l_step, self.motor_l_en)
+        # self.motor_right = Motor(1, self.motor_r_direction, self.motor_r_step, self.motor_r_en)
+        self.motor_left = Motor(self.motor_l_direction, self.motor_l_step, self.motor_l_en)
+        self.motor_right = Motor(self.motor_r_direction, self.motor_r_step, self.motor_r_en)
 
         self.enabled: bool = True
 

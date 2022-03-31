@@ -38,7 +38,7 @@ class BalanceRegulator(object):
         self.turn_speed = 0                      # 转向速度
         self.filter = Filter()                   # 滤波器类
         self.motors = MotorController()          # 马达控制类
-        self.pid = PID(0.012, 0.0002, 0.0015, 0.00005)                         # PID控制器
+        self.pid = PID(0.008, 0.0002, 0.0015, 0.000015)                         # PID控制器
         self.mAverageRpsVelocity = 0             # 平均转速，中间量
         self.error_sum = 0                       # PI 计算时的累积误差
         # self.prev_error_angle = 0                # 上一次的错误角度
@@ -95,10 +95,10 @@ class BalanceRegulator(object):
             self.mAverageRpsVelocity += self.pid.PD_Angel(self.current_angle, ANGLE_OFFSET, dt)     # 计算直立环，累积小车的速度
             self.mAverageRpsVelocity = constrain(self.mAverageRpsVelocity, -4, 4)
             # self.turn_speed_delta = self.pid.PD_Turn(self.turn_target, self.imu.gyro.z)         # 计算转向环                                        # 累积小车的转向速度
-            self.L_rps_vel = self.mAverageRpsVelocity  + self.turn_speed_delta   # 左轮加上转向的速度数据
-            self.R_rps_vel = self.mAverageRpsVelocity  - self.turn_speed_delta   # 右轮加上转向的速度数据
+            self.L_rps_vel = self.mAverageRpsVelocity - target_speed + self.turn_speed_delta   # 左轮加上转向的速度数据
+            self.R_rps_vel = self.mAverageRpsVelocity - target_speed - self.turn_speed_delta   # 右轮加上转向的速度数据
             self.motors.setSpeed(self.L_rps_vel, self.R_rps_vel)                               # 设定左右轮的速度
-        #print(self.current_angle, self.L_rps_vel)
+        # print(self.current_angle, self.L_rps_vel)
         # self.previous_angle = self.current_angle
         # if gc.mem_free() < 4000:
         #     gc.collect()
