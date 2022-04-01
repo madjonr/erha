@@ -20,10 +20,10 @@ while True:
         led.value(1)
         if b'\xff\x01\x01\x01\x02\x00\x01\x00' == msg:
             keyPressed = 'forward'
-            regulator.setRelativeExpectedSpeed(1.0)
+            regulator.setRelativeExpectedSpeed(0.7)
         elif b'\xff\x01\x01\x01\x02\x00\x02\x00' == msg:
             keyPressed = 'back'
-            regulator.setRelativeExpectedSpeed(-1.0)
+            regulator.setRelativeExpectedSpeed(-0.7)
         elif b'\xff\x01\x01\x01\x02\x00\x04\x00' == msg:
             keyPressed = 'left'
             regulator.setTurnTarget(0.4)

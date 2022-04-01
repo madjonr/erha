@@ -46,7 +46,7 @@ class BalanceRegulator(object):
         # self.previous_angle = 0                  # 上一次计算的角度
         self.turn_target = 0.0                   # 转向目标速度
         self.turn_speed_delta = 0                # 转向累积量
-        self.angle_offset_delta = 0              # 加速角度累积量
+
 
     def setTurnTarget(self, target):
         """
@@ -57,12 +57,6 @@ class BalanceRegulator(object):
 
     def setRelativeExpectedSpeed(self, target):
         self.angle_offset = target
-
-    def compute_angle(self):
-        if self.angle_offset > self.angle_offset_delta:
-            self.angle_offset_delta += 0.01
-        if self.angle_offset < self.angle_offset_delta:
-            self.angle_offset_delta -= 0.01
 
 
     @micropython.native
@@ -101,8 +95,7 @@ class BalanceRegulator(object):
         if motor_enabled:
             estimated_speed = self.estimateSpeed()                                         # 估算小车速度
             target_speed = self.pid.PI_Speed(estimated_speed, self.expected_speed, dt)         # 计算速度环
-            self.compute_angle()  # 计算加速角度
-            self.mAverageRpsVelocity += self.pid.PD_Angel(self.current_angle, self.angle_offset_delta, dt)     # 计算直立环，累积小车的速度
+            self.mAverageRpsVelocity += self.pid.PD_Angel(self.current_angle, self.angle_offset, dt)     # 计算直立环，累积小车的速度
             self.mAverageRpsVelocity = constrain(self.mAverageRpsVelocity, -4.5, 4.5)
             self.turn_speed_delta += self.pid.PD_Turn((self.L_rps_vel-self.R_rps_vel)/2, self.turn_target, dt)                        # 计算转向环,累积小车的转向速度
             self.L_rps_vel = self.mAverageRpsVelocity - target_speed + self.turn_speed_delta   # 左轮加上转向的速度数据
